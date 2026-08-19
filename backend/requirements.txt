@@ -9,6 +9,12 @@ pydantic-settings==2.5.2
 email-validator==2.2.0
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+# Pinned: passlib 1.7.4 (unmaintained since 2020) probes bcrypt's internal
+# __about__.__version__ attribute to detect its version; bcrypt>=4.1 removed
+# that attribute, which makes passlib's own self-test crash with a
+# "password cannot be longer than 72 bytes" ValueError on every hash/verify
+# call, regardless of the actual password. Pin bcrypt below that break.
+bcrypt==4.0.1
 python-multipart==0.0.9
 langchain==0.3.3
 langchain-openai==0.2.2
