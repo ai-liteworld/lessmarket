@@ -24,6 +24,12 @@ _llm = ChatOpenAI(
 )
 
 
+_VALID_FIELD_TYPES = {"text", "number", "select", "boolean", "date"}
+# Keys whose value is a list of { key, label, type, options[] } spec-field
+# objects, across both response shapes.
+_SPEC_FIELD_LIST_KEYS = ("required_specs", "optional_specs", "refinement_options")
+
+
 def _parse_json(content: str) -> dict:
     """Best-effort JSON extraction. Unlike OpenAI, not every open model/
     provider behind the HF router honors a strict JSON response_format, so
@@ -38,6 +44,19 @@ def _parse_json(content: str) -> dict:
     return json.loads(text)
 
 
+def _coerce_invalid_field_types(data: dict) -> dict:
+    """Open models occasionally put something other than one of the five
+    allowed widget types (e.g. the field's own name) into a spec field's
+    "type", which would otherwise fail pydantic validation and 500 the
+    whole request. Fall back to "text" for anything outside the allowed
+    set instead of hard-failing on an otherwise-usable response."""
+    for list_key in _SPEC_FIELD_LIST_KEYS:
+        for field in data.get(list_key, None) or []:
+            if isinstance(field, dict) and field.get("type") not in _VALID_FIELD_TYPES:
+                field["type"] = "text"
+    return data
+
+
 def generate_seller_schema(description: str) -> SchemaGenerationResult:
     response = _llm.invoke(
         [
@@ -45,7 +64,8 @@ def generate_seller_schema(description: str) -> SchemaGenerationResult:
             {"role": "user", "content": description},
         ]
     )
-    return SchemaGenerationResult.model_validate(_parse_json(response.content))
+    data = _coerce_invalid_field_types(_parse_json(response.content))
+    return SchemaGenerationResult.model_validate(data)
 
 
 def generate_buyer_filters(query: str) -> FilterGenerationResult:
@@ -55,4 +75,5 @@ def generate_buyer_filters(query: str) -> FilterGenerationResult:
             {"role": "user", "content": query},
         ]
     )
-    return FilterGenerationResult.model_validate(_parse_json(response.content))
+    data = _coerce_invalid_field_types(_parse_json(response.content))
+    return FilterGenerationResult.model_validate(data)

@@ -27,7 +27,10 @@ JSON object with:
 1. category_path: The most specific category path implied.
 2. filters: An object with key-value pairs for filtering (e.g., {"color": "red", "price_max": 500}).
 3. refinement_options: An array of objects with { key, label, type, options[] } for \
-additional filters the user might want to apply.
+additional filters the user might want to apply, where type is one of: text, number, select, \
+boolean, date (type describes the input widget for that filter, e.g. "select" — it is NEVER \
+the filter's own name/category, so a "category" or "year" filter would have type "select" or \
+"number", not type "category" or type "year").
 4. excluded_categories: An array of hierarchical category paths that are lexically or \
 semantically similar to the query but should be EXCLUDED from results (e.g., a search for \
 "waterproof jacket" should exclude "Outdoor & Camping > Tents" even though "waterproof" matches).
