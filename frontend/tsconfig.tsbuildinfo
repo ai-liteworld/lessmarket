@@ -1,1 +1,0 @@
-{"root":["./src/App.tsx","./src/main.tsx","./src/components/DynamicForm.tsx","./src/components/FormField.tsx","./src/lib/api.ts","./src/pages/SearchPage.tsx","./src/pages/SellPage.tsx","./src/store/useAppStore.ts"],"version":"5.9.3"}
