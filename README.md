@@ -10,14 +10,15 @@ and the addendum in [`docs/ADDENDUM_negative_categories.md`](docs/ADDENDUM_negat
 
 ## Stack
 
-React 18 + Vite + Tailwind (frontend) · FastAPI + LangChain + OpenAI (backend)
-· PostgreSQL 15 + pgvector (data + vector search) · Celery + Redis (async jobs)
-· Docker / Kubernetes (deployment). Full rationale in the spec, section 2.
+React 18 + Vite + Tailwind (frontend) · FastAPI + LangChain + Hugging Face
+Inference Providers (backend) · PostgreSQL 15 + pgvector (data + vector
+search) · Celery + Redis (async jobs) · Docker / Kubernetes (deployment).
+Full rationale in the spec, section 2.
 
 ## Getting started (local dev)
 
 ```bash
-cp .env.example .env        # fill in OPENAI_API_KEY at minimum
+cp .env.example .env        # fill in HF_TOKEN at minimum
 docker compose up --build
 ```
 

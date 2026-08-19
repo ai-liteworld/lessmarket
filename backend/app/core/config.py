@@ -21,10 +21,13 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5432/marketplace"
     REDIS_URL: str = "redis://localhost:6379/0"
 
-    # --- LLM provider ---
-    OPENAI_API_KEY: str = ""
-    OPENAI_MODEL: str = "gpt-4o"
-    LLM_REQUEST_TIMEOUT_SECONDS: int = 15
+    # --- LLM provider (Hugging Face Inference Providers, OpenAI-compatible) ---
+    HF_TOKEN: str = ""
+    LLM_MODEL: str = "Qwen/Qwen2.5-7B-Instruct"
+    LLM_BASE_URL: str = "https://router.huggingface.co/v1"
+    # Free-tier serverless models can have cold-start delays (10-30s), so
+    # give this more headroom than a typical OpenAI-style timeout.
+    LLM_REQUEST_TIMEOUT_SECONDS: int = 30
 
     # --- Storage ---
     AWS_ACCESS_KEY_ID: str = ""
