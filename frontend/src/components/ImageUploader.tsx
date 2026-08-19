@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { attachImage, deleteImage, getUploadSignature, uploadImageToCloudinary } from "@/lib/api";
+import { Icon } from "./icons";
 
 export interface UploadedImage {
   id: string;
@@ -64,28 +65,38 @@ export default function ImageUploader({ adId, images, onChange, max = 3 }: Props
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-sm font-medium">Photos ({images.length}/{max})</p>
-      <div className="flex flex-wrap gap-2">
+      <p className="text-xs font-medium uppercase tracking-widest text-[var(--muted-foreground)]">
+        Photos ({images.length}/{max})
+      </p>
+      <div className="flex flex-wrap gap-3">
         {images.map((img) => (
-          <div key={img.id} className="relative h-20 w-20 overflow-hidden rounded border">
+          <div key={img.id} className="relative h-24 w-24 overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)]">
             <img src={img.url} alt="" className="h-full w-full object-cover" />
             <button
               type="button"
               onClick={() => handleRemove(img.id)}
-              className="absolute right-0 top-0 rounded-bl bg-black/60 px-1 text-xs text-white"
+              aria-label="Remove photo"
+              className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
             >
-              ✕
+              <Icon.X />
             </button>
             {img.is_primary && (
-              <span className="absolute bottom-0 left-0 w-full bg-black/60 text-center text-[9px] text-white">
-                cover
+              <span className="price-badge absolute bottom-0 left-0 w-full py-1 text-center text-[9px] font-medium uppercase tracking-wide text-white">
+                Cover
               </span>
             )}
           </div>
         ))}
         {remaining > 0 && (
-          <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center rounded border border-dashed text-xs text-neutral-500 hover:bg-neutral-50">
-            {busy ? "Uploading…" : "+ Add"}
+          <label className="flex h-24 w-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-[var(--radius-md)] border border-dashed border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--accent)] hover:text-[var(--accent)]">
+            {busy ? (
+              <span className="text-xs">Uploading…</span>
+            ) : (
+              <>
+                <Icon.Plus />
+                <span className="text-xs">Add</span>
+              </>
+            )}
             <input
               type="file"
               accept="image/*"

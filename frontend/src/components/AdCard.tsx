@@ -10,31 +10,33 @@ interface Props {
 
 export default function AdCard({ ad, action }: Props) {
   return (
-    <div className="flex flex-col overflow-hidden rounded-lg border">
+    <div className="ad-card overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)] shadow-sm">
       <Link to={`/ad/${ad.id}`} className="block">
-        <div className="aspect-square w-full bg-neutral-100">
+        <div className="relative aspect-[4/3] bg-[var(--muted)]">
           {ad.image_url ? (
-            <img src={ad.image_url} alt={ad.title} className="h-full w-full object-cover" />
+            <img src={ad.image_url} alt={ad.title} className="h-full w-full object-cover" loading="lazy" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-xs text-neutral-400">
+            <div className="flex h-full w-full items-center justify-center text-xs text-[var(--muted-foreground)]">
               No photo
             </div>
           )}
+          <div className="price-badge absolute inset-x-0 bottom-0 flex items-end justify-between px-3 py-2">
+            <span className="font-display text-lg font-semibold leading-none text-white">${ad.price}</span>
+            {ad.status && ad.status !== "active" && (
+              <span className="text-xs font-medium uppercase tracking-wide text-red-300">{ad.status}</span>
+            )}
+          </div>
         </div>
       </Link>
-      <div className="flex flex-1 flex-col gap-1 p-3">
-        <Link to={`/ad/${ad.id}`} className="line-clamp-2 text-sm font-medium hover:underline">
+      <div className="px-3 py-2.5">
+        <Link to={`/ad/${ad.id}`} className="block truncate text-sm font-medium text-[var(--foreground)] hover:underline">
           {ad.title}
         </Link>
-        <p className="text-sm font-semibold text-neutral-900">${ad.price}</p>
-        <p className="truncate text-xs text-neutral-500">{ad.category_path}</p>
-        {ad.location && <p className="truncate text-xs text-neutral-400">{ad.location}</p>}
-        {ad.status && ad.status !== "active" && (
-          <span className="w-fit rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] uppercase text-neutral-500">
-            {ad.status}
-          </span>
-        )}
-        {action && <div className="mt-1">{action}</div>}
+        <p className="mt-0.5 truncate text-xs text-[var(--muted-foreground)]">
+          {ad.location ? `${ad.location} · ` : ""}
+          {ad.category_path}
+        </p>
+        {action && <div className="mt-2">{action}</div>}
       </div>
     </div>
   );

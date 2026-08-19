@@ -3,11 +3,16 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchMe, resendOtp, verifyOtp } from "@/lib/api";
 import { useAppStore } from "@/store/useAppStore";
+import AuthCard from "@/components/AuthCard";
 
 function errorMessage(err: unknown): string {
   const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
   return detail || "Something went wrong - please try again.";
 }
+
+const inputClass =
+  "w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-[var(--ring)]";
+const labelClass = "mb-1.5 block text-xs font-medium text-[var(--muted-foreground)]";
 
 export default function VerifyOtpPage() {
   const navigate = useNavigate();
@@ -31,36 +36,37 @@ export default function VerifyOtpPage() {
   const resendMutation = useMutation({ mutationFn: () => resendOtp(phone) });
 
   return (
-    <div className="mx-auto flex max-w-sm flex-col gap-3">
-      <h1 className="text-lg font-semibold">Verify your phone</h1>
-      <p className="text-sm text-neutral-500">
-        We sent a code to <span className="font-medium">{phone}</span>.
-      </p>
+    <AuthCard
+      title="Verify your phone"
+      subtitle={
+        phone ? `We sent a code to ${phone}.` : "We sent a code to your phone."
+      }
+    >
       <form
-        className="flex flex-col gap-3"
+        className="flex flex-col gap-4"
         onSubmit={(e) => {
           e.preventDefault();
           verifyMutation.mutate();
         }}
       >
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Verification code</span>
+        <div>
+          <label className={labelClass}>Verification code</label>
           <input
-            className="rounded border p-2 text-center text-lg tracking-widest"
+            className={inputClass}
             value={code}
             onChange={(e) => setCode(e.target.value)}
             inputMode="numeric"
             maxLength={8}
             required
           />
-        </label>
+        </div>
 
         {verifyMutation.isError && <p className="text-sm text-red-600">{errorMessage(verifyMutation.error)}</p>}
         {resendMutation.isSuccess && <p className="text-sm text-green-600">Code resent.</p>}
 
         <button
           type="submit"
-          className="rounded bg-neutral-900 p-2 text-white disabled:opacity-50"
+          className="mt-1 w-full rounded-[var(--radius-md)] bg-[var(--primary)] py-2.5 text-sm font-medium text-[var(--primary-foreground)] transition-opacity hover:opacity-90 disabled:opacity-50"
           disabled={verifyMutation.isPending || !phone}
         >
           {verifyMutation.isPending ? "Verifying…" : "Activate account"}
@@ -68,12 +74,12 @@ export default function VerifyOtpPage() {
       </form>
       <button
         type="button"
-        className="text-left text-sm text-blue-600 disabled:opacity-50"
+        className="mt-4 w-full text-center text-sm font-medium text-[var(--accent)] disabled:opacity-50"
         onClick={() => resendMutation.mutate()}
         disabled={resendMutation.isPending || !phone}
       >
         Didn't get a code? Resend
       </button>
-    </div>
+    </AuthCard>
   );
 }

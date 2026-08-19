@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import type { SchemaGenerationResult, SpecField } from "@/lib/api";
 import FormField from "./FormField";
+import { Icon } from "./icons";
 
 interface Props {
   schema: SchemaGenerationResult;
@@ -25,30 +26,38 @@ export default function DynamicForm({ schema, onSubmit }: Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex max-w-md flex-col gap-3">
-      <p className="text-sm text-neutral-500">Category: {schema.category_path}</p>
-
-      {schema.required_specs.map((field) => (
-        <FormField key={field.key} field={field} register={register} required />
-      ))}
-      {schema.optional_specs.map((field) => (
-        <FormField key={field.key} field={field} register={register} />
-      ))}
-      {customFields.map((field) => (
-        <FormField key={field.key} field={field} register={register} />
-      ))}
-
-      {schema.excluded_category_paths.length > 0 && (
-        <p className="text-xs text-neutral-400">
-          Not listed under: {schema.excluded_category_paths.join(", ")}
-        </p>
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      {(schema.required_specs.length > 0 || schema.optional_specs.length > 0 || customFields.length > 0) && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {schema.required_specs.map((field) => (
+            <FormField key={field.key} field={field} register={register} required />
+          ))}
+          {schema.optional_specs.map((field) => (
+            <FormField key={field.key} field={field} register={register} />
+          ))}
+          {customFields.map((field) => (
+            <FormField key={field.key} field={field} register={register} />
+          ))}
+        </div>
       )}
 
-      <button type="button" onClick={addCustomField} className="text-left text-sm text-blue-600">
-        + Add Custom Field
+      {schema.excluded_category_paths.length > 0 && (
+        <p className="text-xs text-[var(--muted-foreground)]">Not listed under: {schema.excluded_category_paths.join(", ")}</p>
+      )}
+
+      <button
+        type="button"
+        onClick={addCustomField}
+        className="inline-flex w-fit items-center gap-1.5 text-xs font-medium text-[var(--accent)] hover:underline"
+      >
+        <Icon.Plus /> Add custom field
       </button>
-      <button type="submit" className="rounded bg-neutral-900 p-2 text-white">
-        Continue
+
+      <button
+        type="submit"
+        className="w-full rounded-[var(--radius-md)] bg-[var(--primary)] py-3 text-sm font-medium text-[var(--primary-foreground)] transition-opacity hover:opacity-90"
+      >
+        Post Ad
       </button>
     </form>
   );

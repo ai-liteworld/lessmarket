@@ -2,11 +2,16 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
 import { signup } from "@/lib/api";
+import AuthCard from "@/components/AuthCard";
 
 function errorMessage(err: unknown): string {
   const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
   return detail || "Something went wrong - please try again.";
 }
+
+const inputClass =
+  "w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]";
+const labelClass = "mb-1.5 block text-xs font-medium text-[var(--muted-foreground)]";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -21,66 +26,63 @@ export default function SignupPage() {
   });
 
   return (
-    <div className="mx-auto flex max-w-sm flex-col gap-3">
-      <h1 className="text-lg font-semibold">Create your account</h1>
+    <AuthCard title="Create your account" subtitle="Join to start buying and selling in your area.">
       <form
-        className="flex flex-col gap-3"
+        className="flex flex-col gap-4"
         onSubmit={(e) => {
           e.preventDefault();
           signupMutation.mutate();
         }}
       >
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Full name *</span>
-          <input className="rounded border p-2" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Phone number *</span>
+        <div>
+          <label className={labelClass}>Full name *</label>
+          <input className={inputClass} value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+        </div>
+        <div>
+          <label className={labelClass}>Phone number *</label>
           <input
-            className="rounded border p-2"
+            className={inputClass}
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="+962791234567"
             required
           />
-          <span className="text-xs text-neutral-400">
+          <span className="mt-1 block text-xs text-[var(--muted-foreground)]">
             Include the country code (e.g. +962 for Jordan) - we'll text you a verification code.
           </span>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Password *</span>
+        </div>
+        <div>
+          <label className={labelClass}>Password *</label>
           <input
             type="password"
-            className="rounded border p-2"
+            className={inputClass}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={8}
           />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">Email (optional)</span>
-          <input
-            type="email"
-            className="rounded border p-2"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </label>
+        </div>
+        <div>
+          <label className={labelClass}>Email (optional)</label>
+          <input type="email" className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} />
+        </div>
 
         {signupMutation.isError && <p className="text-sm text-red-600">{errorMessage(signupMutation.error)}</p>}
 
         <button
           type="submit"
-          className="rounded bg-neutral-900 p-2 text-white disabled:opacity-50"
+          className="mt-1 w-full rounded-[var(--radius-md)] bg-[var(--primary)] py-2.5 text-sm font-medium text-[var(--primary-foreground)] transition-opacity hover:opacity-90 disabled:opacity-50"
           disabled={signupMutation.isPending}
         >
           {signupMutation.isPending ? "Sending code…" : "Sign up"}
         </button>
       </form>
-      <p className="text-sm text-neutral-500">
-        Already have an account? <Link to="/login" className="text-blue-600">Log in</Link>
+      <p className="mt-5 text-center text-sm text-[var(--muted-foreground)]">
+        Already have an account?{" "}
+        <Link to="/login" className="font-medium text-[var(--accent)]">
+          Log in
+        </Link>
       </p>
-    </div>
+    </AuthCard>
   );
 }

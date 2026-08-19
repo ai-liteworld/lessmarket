@@ -1,43 +1,97 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { fetchMe, fetchMyAds, fetchSavedAds, unsaveAd, updateMe } from "@/lib/api";
+import { fetchMe, fetchMyAds, fetchSavedAds, unsaveAd, updateMe, type AdSummary } from "@/lib/api";
 import { useAppStore } from "@/store/useAppStore";
 import AdCard from "@/components/AdCard";
+import PageShell from "@/components/PageShell";
+import { Icon } from "@/components/icons";
 
 type Tab = "info" | "my-ads" | "saved";
+
+const inputClass =
+  "w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)]";
+const labelClass = "mb-1.5 block text-xs font-medium text-[var(--muted-foreground)]";
+const cardClass = "rounded-xl border border-[var(--border)] bg-[var(--card)] p-6";
 
 export default function ProfilePage() {
   const [tab, setTab] = useState<Tab>("info");
   const token = useAppStore((s) => s.token);
+  const meQuery = useQuery({ queryKey: ["me"], queryFn: fetchMe, enabled: !!token });
+  const myAdsQuery = useQuery({ queryKey: ["my-ads"], queryFn: () => fetchMyAds(), enabled: !!token });
 
   if (!token) {
     return (
-      <p className="text-sm text-neutral-500">
-        <Link to="/login" className="text-blue-600">Log in</Link> to view your profile.
+      <p className="p-8 text-sm text-[var(--muted-foreground)]">
+        <Link to="/login" className="text-[var(--accent)]">Log in</Link> to view your profile.
       </p>
     );
   }
 
-  return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-lg font-semibold">My account</h1>
-      <div className="flex gap-4 border-b text-sm">
-        {(["info", "my-ads", "saved"] as Tab[]).map((t) => (
-          <button
-            key={t}
-            className={`border-b-2 px-1 pb-2 ${tab === t ? "border-neutral-900 font-medium" : "border-transparent text-neutral-500"}`}
-            onClick={() => setTab(t)}
-          >
-            {t === "info" ? "Basic info" : t === "my-ads" ? "My ads" : "Saved ads"}
-          </button>
-        ))}
-      </div>
+  const myAds = myAdsQuery.data ?? [];
+  const activeCount = myAds.filter((a) => (a.status ?? "active") === "active").length;
+  const soldCount = myAds.filter((a) => a.status === "sold").length;
+  const initial = (meQuery.data?.full_name || "?").trim().charAt(0).toUpperCase();
 
-      {tab === "info" && <BasicInfoTab />}
-      {tab === "my-ads" && <MyAdsTab />}
-      {tab === "saved" && <SavedAdsTab />}
-    </div>
+  return (
+    <PageShell title="Your Profile" subtitle="Manage your account details and listing activity.">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        {/* Left: account card + stats */}
+        <div className="lg:col-span-1">
+          <div className={cardClass}>
+            <div className="flex flex-col items-center text-center">
+              <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border-2 border-[var(--border)] bg-[var(--secondary)]">
+                <span className="font-display text-2xl font-semibold text-[var(--foreground)]">{initial}</span>
+              </div>
+              <h2 className="font-display text-xl font-semibold text-[var(--foreground)]">{meQuery.data?.full_name}</h2>
+              <p className="mt-1 flex items-center gap-1 text-sm text-[var(--muted-foreground)]">
+                {meQuery.data?.phone}
+                {meQuery.data?.phone_verified && (
+                  <span title="Verified" className="text-[var(--accent)]">
+                    <Icon.Check />
+                  </span>
+                )}
+              </p>
+              {meQuery.data?.email && <p className="text-xs text-[var(--muted-foreground)]">{meQuery.data.email}</p>}
+            </div>
+            <hr className="my-5 border-[var(--border)]" />
+            <div className="grid grid-cols-2 gap-3 text-center">
+              <div className="rounded-lg bg-[var(--secondary)] p-3">
+                <p className="font-display text-2xl font-semibold text-[var(--foreground)]">{activeCount}</p>
+                <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">Active</p>
+              </div>
+              <div className="rounded-lg bg-[var(--secondary)] p-3">
+                <p className="font-display text-2xl font-semibold text-[var(--foreground)]">{soldCount}</p>
+                <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">Sold</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: tabs + content */}
+        <div className="lg:col-span-2">
+          <div className="mb-5 flex gap-2 text-sm">
+            {(["info", "my-ads", "saved"] as Tab[]).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`rounded-full border px-4 py-2 text-xs font-medium transition-all ${
+                  tab === t
+                    ? "border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)]"
+                    : "border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] hover:border-[var(--accent)]"
+                }`}
+              >
+                {t === "info" ? "Basic info" : t === "my-ads" ? "My ads" : "Saved ads"}
+              </button>
+            ))}
+          </div>
+
+          {tab === "info" && <BasicInfoTab />}
+          {tab === "my-ads" && <MyAdsTab ads={myAds} isLoading={myAdsQuery.isLoading} />}
+          {tab === "saved" && <SavedAdsTab />}
+        </div>
+      </div>
+    </PageShell>
   );
 }
 
@@ -61,59 +115,68 @@ function BasicInfoTab() {
     onSuccess: setUser,
   });
 
-  if (meQuery.isLoading) return <p className="text-sm text-neutral-500">Loading…</p>;
+  if (meQuery.isLoading) return <p className="text-sm text-[var(--muted-foreground)]">Loading…</p>;
 
   return (
     <form
-      className="flex max-w-sm flex-col gap-3"
+      className={cardClass}
       onSubmit={(e) => {
         e.preventDefault();
         saveMutation.mutate();
       }}
     >
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium">Phone</span>
-        <input className="rounded border bg-neutral-50 p-2 text-neutral-500" value={meQuery.data?.phone} disabled />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium">Full name</span>
-        <input className="rounded border p-2" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium">Location</span>
-        <input className="rounded border p-2" value={location} onChange={(e) => setLocation(e.target.value)} />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium">Email</span>
-        <input type="email" className="rounded border p-2" value={email} onChange={(e) => setEmail(e.target.value)} />
-      </label>
-      <button type="submit" className="w-fit rounded bg-neutral-900 px-4 py-2 text-sm text-white disabled:opacity-50" disabled={saveMutation.isPending}>
-        {saveMutation.isPending ? "Saving…" : "Save changes"}
-      </button>
-      {saveMutation.isSuccess && <p className="text-sm text-green-600">Saved.</p>}
+      <h3 className="mb-5 text-sm font-medium text-[var(--foreground)]">Account Details</h3>
+      <div className="space-y-4">
+        <div>
+          <label className={labelClass}>Phone</label>
+          <input className={`${inputClass} bg-[var(--secondary)] text-[var(--muted-foreground)]`} value={meQuery.data?.phone} disabled />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>Full name</label>
+            <input className={inputClass} value={fullName} onChange={(e) => setFullName(e.target.value)} />
+          </div>
+          <div>
+            <label className={labelClass}>Location</label>
+            <input className={inputClass} value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City, Country" />
+          </div>
+        </div>
+        <div>
+          <label className={labelClass}>Email</label>
+          <input type="email" className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} />
+        </div>
+        <div className="pt-2">
+          <button
+            type="submit"
+            className="rounded-[var(--radius-md)] bg-[var(--primary)] px-5 py-2.5 text-sm font-medium text-[var(--primary-foreground)] transition-opacity hover:opacity-90 disabled:opacity-50"
+            disabled={saveMutation.isPending}
+          >
+            {saveMutation.isPending ? "Saving…" : "Save changes"}
+          </button>
+          {saveMutation.isSuccess && <span className="ml-3 text-sm text-[var(--accent)]">Saved.</span>}
+        </div>
+      </div>
     </form>
   );
 }
 
-function MyAdsTab() {
-  const myAdsQuery = useQuery({ queryKey: ["my-ads"], queryFn: () => fetchMyAds() });
-
+function MyAdsTab({ ads, isLoading }: { ads: AdSummary[]; isLoading: boolean }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-neutral-500">
-          {myAdsQuery.data?.length ?? 0} ad{myAdsQuery.data?.length === 1 ? "" : "s"}
+        <p className="text-sm text-[var(--muted-foreground)]">
+          {ads.length} ad{ads.length === 1 ? "" : "s"}
         </p>
-        <Link to="/manage-ads" className="text-sm text-blue-600">Manage ads →</Link>
+        <Link to="/manage-ads" className="text-sm text-[var(--accent)]">Manage ads →</Link>
       </div>
-      {myAdsQuery.isLoading && <p className="text-sm text-neutral-500">Loading…</p>}
-      {myAdsQuery.data?.length === 0 && (
-        <p className="text-sm text-neutral-500">
-          You haven't posted anything yet. <Link to="/sell" className="text-blue-600">Sell something</Link>
+      {isLoading && <p className="text-sm text-[var(--muted-foreground)]">Loading…</p>}
+      {!isLoading && ads.length === 0 && (
+        <p className="text-sm text-[var(--muted-foreground)]">
+          You haven't posted anything yet. <Link to="/sell" className="text-[var(--accent)]">Sell something</Link>
         </p>
       )}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        {myAdsQuery.data?.map((ad) => <AdCard key={ad.id} ad={ad} />)}
+        {ads.map((ad) => <AdCard key={ad.id} ad={ad} />)}
       </div>
     </div>
   );
@@ -130,8 +193,8 @@ function SavedAdsTab() {
 
   return (
     <div className="flex flex-col gap-3">
-      {savedQuery.isLoading && <p className="text-sm text-neutral-500">Loading…</p>}
-      {savedQuery.data?.length === 0 && <p className="text-sm text-neutral-500">Nothing saved yet.</p>}
+      {savedQuery.isLoading && <p className="text-sm text-[var(--muted-foreground)]">Loading…</p>}
+      {savedQuery.data?.length === 0 && <p className="text-sm text-[var(--muted-foreground)]">Nothing saved yet.</p>}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         {savedQuery.data?.map((ad) => (
           <AdCard
@@ -139,7 +202,7 @@ function SavedAdsTab() {
             ad={ad}
             action={
               <button
-                className="text-xs text-red-600"
+                className="text-xs text-red-500 hover:text-red-600"
                 onClick={() => unsaveMutation.mutate(ad.id)}
                 disabled={unsaveMutation.isPending}
               >

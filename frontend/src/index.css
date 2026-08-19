@@ -1,3 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,300;1,9..144,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --background: #faf9f7;
+  --foreground: #1a1714;
+  --card: #ffffff;
+  --card-foreground: #1a1714;
+  --primary: #1a1714;
+  --primary-foreground: #faf9f7;
+  --secondary: #f0ece6;
+  --secondary-foreground: #1a1714;
+  --muted: #e8e3db;
+  --muted-foreground: #7a7168;
+  --accent: #c17f4a;
+  --accent-foreground: #ffffff;
+  --border: #ddd8cf;
+  --ring: #c17f4a;
+  --radius: 6px;
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+
+* {
+  scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+input,
+textarea,
+select {
+  font-family: var(--font-body);
+}
+
+/* Ad card: image + overlaid price badge, hover lift */
+.ad-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.ad-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+.price-badge {
+  background: rgba(26, 23, 20, 0.82);
+  backdrop-filter: blur(4px);
+}
+
+/* Category filter/picker chips */
+.tag-chip {
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.tag-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.tag-chip.selected {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+}
+
+/* Right-side icon nav rail */
+.sidebar-icon {
+  transition: all 0.18s ease;
+}
+.sidebar-icon:hover {
+  background: var(--secondary);
+  color: var(--accent);
+}
+.sidebar-icon.active {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
