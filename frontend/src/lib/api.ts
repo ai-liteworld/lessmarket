@@ -1,7 +1,16 @@
 import axios from "axios";
 import { useAppStore } from "@/store/useAppStore";
 
-export const api = axios.create({ baseURL: "/api" });
+// In local dev without VITE_API_BASE_URL set, requests go to the relative
+// "/api" path and Vite's dev server proxy (see vite.config.ts) forwards
+// them to the backend. In production (e.g. GitHub Pages, which only serves
+// static files and can't proxy anything), VITE_API_BASE_URL must be set at
+// build time to the deployed backend's origin, e.g. https://lessmarket-backend.onrender.com
+const baseURL = import.meta.env.VITE_API_BASE_URL
+  ? `${import.meta.env.VITE_API_BASE_URL}/api`
+  : "/api";
+
+export const api = axios.create({ baseURL });
 
 api.interceptors.request.use((config) => {
   const token = useAppStore.getState().token;
