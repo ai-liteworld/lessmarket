@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.llm.client import generate_buyer_filters
 from app.models.ad import Ad
+from app.models.ad_image import AdImage
 from app.schemas.llm import FilterGenerationResult
 
 router = APIRouter(prefix="/api", tags=["search"])
@@ -43,14 +44,37 @@ def search_ads(
 ):
     # TODO: embed `q`, run pgvector cosine similarity + JSONB filter predicates
     # + excluded_categories / negative_filters exclusion, rank 70/30, paginate.
-    stmt = select(Ad).where(Ad.status == "active")
+    # Until the embedding pipeline lands, default to recency - this also
+    # means calling this endpoint with no q/category_path (as the landing
+    # page's "top ads" grid does) returns the most recently posted active
+    # ads, a reasonable stand-in for "top" before any view/click tracking
+    # exists.
+    stmt = select(Ad).where(Ad.status == "active").order_by(Ad.created_at.desc())
     if category_path:
         stmt = stmt.where(Ad.category_path == category_path)
     stmt = stmt.offset((page - 1) * page_size).limit(page_size)
     ads = db.execute(stmt).scalars().all()
+
+    ad_ids = [a.id for a in ads]
+    primary_images: dict = {}
+    if ad_ids:
+        image_rows = (
+            db.query(AdImage)
+            .filter(AdImage.ad_id.in_(ad_ids), AdImage.is_primary.is_(True))
+            .all()
+        )
+        primary_images = {img.ad_id: img.url for img in image_rows}
+
     return {
         "results": [
-            {"id": str(a.id), "title": a.title, "price": float(a.price), "category_path": a.category_path}
+            {
+                "id": str(a.id),
+                "title": a.title,
+                "price": float(a.price),
+                "category_path": a.category_path,
+                "location": a.location,
+                "image_url": primary_images.get(a.id),
+            }
             for a in ads
         ],
         "page": page,

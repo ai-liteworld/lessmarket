@@ -35,12 +35,28 @@ class Settings(BaseSettings):
     # give this more headroom than a typical OpenAI-style timeout.
     LLM_REQUEST_TIMEOUT_SECONDS: int = 30
 
-    # --- Storage ---
+    # --- Storage (Cloudinary: signed direct-to-cloud uploads from the browser) ---
     AWS_ACCESS_KEY_ID: str = ""
     AWS_SECRET_ACCESS_KEY: str = ""
     AWS_REGION: str = "us-east-1"
     S3_BUCKET_NAME: str = "marketplace-images"
     CLOUDINARY_URL: str = ""
+    CLOUDINARY_CLOUD_NAME: str = ""
+    CLOUDINARY_API_KEY: str = ""
+    CLOUDINARY_API_SECRET: str = ""
+
+    # --- SMS OTP (Twilio Verify - phone signup activation) ---
+    TWILIO_ACCOUNT_SID: str = ""
+    TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_VERIFY_SERVICE_SID: str = ""
+    # When true, skip real Twilio calls and accept a fixed dev code (123456)
+    # instead - lets the signup/verify flow be built and tested with zero
+    # SMS cost before a Twilio account is wired up.
+    SMS_MOCK_MODE: bool = False
+    SMS_MOCK_CODE: str = "123456"
+
+    # --- Ad limits ---
+    MAX_AD_IMAGES: int = 3
 
     # --- Caching TTLs (spec 4.4) ---
     SCHEMA_CACHE_TTL_HOURS: int = 24

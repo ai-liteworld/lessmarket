@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { fetchSearchFilters, searchAds, type FilterGenerationResult } from "@/lib/api";
+import AdCard from "@/components/AdCard";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
@@ -11,10 +12,12 @@ export default function SearchPage() {
     onSuccess: setFilters,
   });
 
+  // Runs even before a search is made, so /search shows recent listings by
+  // default (same recency-based query the landing page uses) rather than a
+  // blank page; narrows to filters.category_path once a search runs.
   const resultsQuery = useQuery({
     queryKey: ["ads-search", filters?.category_path],
     queryFn: () => searchAds({ category_path: filters?.category_path }),
-    enabled: !!filters,
   });
 
   return (
@@ -50,12 +53,13 @@ export default function SearchPage() {
         </div>
       )}
 
+      {resultsQuery.isLoading && <p className="text-sm text-neutral-500">Loading…</p>}
+      {resultsQuery.data?.results?.length === 0 && (
+        <p className="text-sm text-neutral-500">No listings found.</p>
+      )}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        {resultsQuery.data?.results?.map((ad: any) => (
-          <div key={ad.id} className="rounded border p-3">
-            <p className="font-medium">{ad.title}</p>
-            <p className="text-sm text-neutral-500">${ad.price}</p>
-          </div>
+        {resultsQuery.data?.results?.map((ad) => (
+          <AdCard key={ad.id} ad={ad} />
         ))}
       </div>
     </div>

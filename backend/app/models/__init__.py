@@ -4,5 +4,6 @@ from app.models.ad_image import AdImage
 from app.models.order import Order
 from app.models.message import Message
 from app.models.schema_cache import SchemaCache
+from app.models.saved_ad import SavedAd
 
-__all__ = ["User", "Ad", "AdImage", "Order", "Message", "SchemaCache"]
+__all__ = ["User", "Ad", "AdImage", "Order", "Message", "SchemaCache", "SavedAd"]

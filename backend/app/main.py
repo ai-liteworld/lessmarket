@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routes import admin, ads, auth, orders, search
+from app.api.routes import admin, ads, auth, orders, search, users
 from app.core.config import get_settings
 
 logger = logging.getLogger("lessmarket")
@@ -25,6 +25,7 @@ app.include_router(ads.router)
 app.include_router(search.router)
 app.include_router(orders.router)
 app.include_router(admin.router)
+app.include_router(users.router)
 
 
 @app.exception_handler(Exception)
