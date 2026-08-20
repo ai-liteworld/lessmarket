@@ -6,9 +6,27 @@ interface Props {
   ad: AdSummary;
   /** Optional trailing action slot (save/unsave button, manage actions, ...) */
   action?: ReactNode;
+  /**
+   * Main search/browse grids show only the image + price - everything else
+   * ("other information") is revealed on the ad detail page per spec. Other
+   * contexts (profile's "my ads"/"saved" lists) keep the title/location line.
+   */
+  compact?: boolean;
 }
 
-export default function AdCard({ ad, action }: Props) {
+function DefaultAdImage() {
+  return (
+    <div className="flex h-full w-full items-center justify-center text-[var(--muted-foreground)]">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <polyline points="21 15 16 10 5 21" />
+      </svg>
+    </div>
+  );
+}
+
+export default function AdCard({ ad, action, compact = false }: Props) {
   return (
     <div className="ad-card overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)] shadow-sm">
       <Link to={`/ad/${ad.id}`} className="block">
@@ -16,9 +34,7 @@ export default function AdCard({ ad, action }: Props) {
           {ad.image_url ? (
             <img src={ad.image_url} alt={ad.title} className="h-full w-full object-cover" loading="lazy" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-xs text-[var(--muted-foreground)]">
-              No photo
-            </div>
+            <DefaultAdImage />
           )}
           <div className="price-badge absolute inset-x-0 bottom-0 flex items-end justify-between px-3 py-2">
             <span className="font-display text-lg font-semibold leading-none text-white">${ad.price}</span>
@@ -28,16 +44,19 @@ export default function AdCard({ ad, action }: Props) {
           </div>
         </div>
       </Link>
-      <div className="px-3 py-2.5">
-        <Link to={`/ad/${ad.id}`} className="block truncate text-sm font-medium text-[var(--foreground)] hover:underline">
-          {ad.title}
-        </Link>
-        <p className="mt-0.5 truncate text-xs text-[var(--muted-foreground)]">
-          {ad.location ? `${ad.location} · ` : ""}
-          {ad.category_path}
-        </p>
-        {action && <div className="mt-2">{action}</div>}
-      </div>
+      {!compact && (
+        <div className="px-3 py-2.5">
+          <Link to={`/ad/${ad.id}`} className="block truncate text-sm font-medium text-[var(--foreground)] hover:underline">
+            {ad.title}
+          </Link>
+          <p className="mt-0.5 truncate text-xs text-[var(--muted-foreground)]">
+            {ad.location ? `${ad.location} · ` : ""}
+            {ad.category_paths?.[0]}
+          </p>
+          {action && <div className="mt-2">{action}</div>}
+        </div>
+      )}
+      {compact && action && <div className="px-3 py-2">{action}</div>}
     </div>
   );
 }

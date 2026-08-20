@@ -21,8 +21,12 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
-app.include_router(ads.router)
+# search.router must be registered before ads.router: its literal
+# GET /api/ads/search route would otherwise be shadowed by ads.router's
+# GET /api/ads/{ad_id} (Starlette matches routes in registration order, and
+# {ad_id} happily matches the literal string "search").
 app.include_router(search.router)
+app.include_router(ads.router)
 app.include_router(orders.router)
 app.include_router(admin.router)
 app.include_router(users.router)

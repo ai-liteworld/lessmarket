@@ -25,8 +25,8 @@ CREATE TABLE IF NOT EXISTS ads (
     description TEXT NOT NULL,
     price DECIMAL(10,2) NOT NULL,
     status TEXT NOT NULL DEFAULT 'active', -- active, sold, expired, deleted
-    category_path TEXT NOT NULL,           -- e.g. "Vehicles > Bicycles > Mountain Bikes"
-    excluded_category_paths TEXT[] DEFAULT '{}', -- ADDENDUM: LLM-flagged "commonly confused with" categories
+    category_paths TEXT[] NOT NULL DEFAULT '{}', -- e.g. ARRAY['Vehicles > Bicycles > Mountain Bikes'] (phase 3: multi-category)
+    excluded_category_paths TEXT[] DEFAULT '{}', -- LLM-flagged "commonly confused with" categories, seller-editable (phase 3)
     specs JSONB NOT NULL,                  -- Dynamic specs (LLM-generated + user-added)
     user_added_fields TEXT[] DEFAULT '{}',
     embedding VECTOR(1536),
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS ads (
 
 CREATE INDEX IF NOT EXISTS idx_ads_seller_id ON ads(seller_id);
 CREATE INDEX IF NOT EXISTS idx_ads_status ON ads(status);
-CREATE INDEX IF NOT EXISTS idx_ads_category_path ON ads(category_path);
+CREATE INDEX IF NOT EXISTS idx_ads_category_paths ON ads USING GIN (category_paths);
 CREATE INDEX IF NOT EXISTS idx_ads_excluded_category_paths ON ads USING GIN (excluded_category_paths);
 CREATE INDEX IF NOT EXISTS idx_ads_specs ON ads USING GIN (specs);
 CREATE INDEX IF NOT EXISTS idx_ads_embedding ON ads USING hnsw (embedding vector_cosine_ops);

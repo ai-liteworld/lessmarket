@@ -24,7 +24,9 @@ Return ONLY valid JSON. No explanations."""
 
 BUYER_FILTER_SYSTEM_PROMPT = """You are an AI marketplace assistant. Given a user's search query, return a \
 JSON object with:
-1. category_path: The most specific category path implied.
+1. category_paths: An array of 1-4 hierarchical category paths relevant to the query, ordered \
+most-to-least specific (e.g. a search for "bike" could return ["Vehicles > Bicycles", \
+"Sports & Fitness > Cycling"]). Return the single best-matching path if only one is clearly relevant.
 2. filters: An object with key-value pairs for filtering (e.g., {"color": "red", "price_max": 500}).
 3. refinement_options: An array of objects with { key, label, type, options[] } for \
 additional filters the user might want to apply, where type is one of: text, number, select, \

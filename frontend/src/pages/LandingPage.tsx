@@ -32,7 +32,9 @@ export default function LandingPage() {
   };
 
   const ads = topAdsQuery.data?.results ?? [];
-  const filteredAds = activeCategories.length ? ads.filter((ad) => activeCategories.includes(ad.category_path)) : ads;
+  const filteredAds = activeCategories.length
+    ? ads.filter((ad) => ad.category_paths?.some((cp) => activeCategories.includes(cp)))
+    : ads;
 
   const handleSubmit = () => {
     if (prompt.trim()) navigate("/search", { state: { query: prompt.trim() } });
@@ -87,7 +89,7 @@ export default function LandingPage() {
         )}
       </div>
 
-      {/* Ad grid */}
+      {/* Ad grid: image + price only - other details show on the ad page */}
       <div className="mx-auto max-w-6xl px-6 pb-16">
         {topAdsQuery.isLoading && <p className="text-sm text-[var(--muted-foreground)]">Loading…</p>}
         {topAdsQuery.isError && <p className="text-sm text-red-600">Couldn't load listings right now - try refreshing.</p>}
@@ -98,7 +100,7 @@ export default function LandingPage() {
         )}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {filteredAds.map((ad) => (
-            <AdCard key={ad.id} ad={ad} />
+            <AdCard key={ad.id} ad={ad} compact />
           ))}
           {topAdsQuery.data && filteredAds.length === 0 && (
             <div className="col-span-full py-16 text-center text-sm text-[var(--muted-foreground)]">

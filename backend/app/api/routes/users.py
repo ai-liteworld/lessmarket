@@ -36,7 +36,8 @@ def _serialize_ad_summary(ad: Ad, image_url: str | None) -> dict:
         "title": ad.title,
         "price": float(ad.price),
         "status": ad.status,
-        "category_path": ad.category_path,
+        "category_paths": ad.category_paths,
+        "location": ad.location,
         "image_url": image_url,
         "created_at": ad.created_at.isoformat() if ad.created_at else None,
     }

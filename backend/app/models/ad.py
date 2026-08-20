@@ -6,12 +6,19 @@ identified as commonly-confused-with-this-item during schema generation
 (spec addendum — see docs/ADDENDUM_negative_categories.md). Search execution
 uses this to keep near-miss semantic matches out of results for OTHER items,
 the same way `filters` narrows results FOR this item.
+
+Phase 3: `category_paths` replaces the old single `category_path` — an ad
+can now carry several categories (seller picks from LLM suggestions, prior
+ads' categories, or types a custom one; see db/migrations/003_*.sql for the
+backfill from the old column). `excluded_category_paths` is unchanged in
+shape but is now also directly editable by the seller, not just an
+LLM-generated read-only note.
 """
 import uuid
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import String, Text, Numeric, DateTime, func, ARRAY, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import String, Text, Numeric, DateTime, func, ForeignKey
+from sqlalchemy.dialects.postgresql import ARRAY, UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.session import Base
@@ -27,7 +34,8 @@ class Ad(Base):
     price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     status: Mapped[str] = mapped_column(String, nullable=False, default="active")  # active, sold, expired, deleted
 
-    category_path: Mapped[str] = mapped_column(Text, nullable=False)  # e.g. "Vehicles > Bicycles > Mountain Bikes"
+    # e.g. ["Vehicles > Bicycles > Mountain Bikes", "Sports & Fitness > Cycling"]
+    category_paths: Mapped[list[str]] = mapped_column(ARRAY(Text), nullable=False, default=list)
     excluded_category_paths: Mapped[list[str] | None] = mapped_column(ARRAY(Text), default=list)
 
     specs: Mapped[dict] = mapped_column(JSONB, nullable=False)  # LLM-generated + user-added

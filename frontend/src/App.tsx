@@ -15,10 +15,12 @@ type NavItem = { to: string; label: string; icon: React.ReactNode };
 
 function Sidebar({ onLogout }: { onLogout: () => void }) {
   const location = useLocation();
+  // Menu is icons on the right: Home, Account, Post Ad, Manage Ads, Exit
+  // (per spec) - browsing/search happens from the home page's search box,
+  // so it isn't a separate sidebar entry.
   const items: NavItem[] = [
     { to: "/", label: "Home", icon: <Icon.Home /> },
-    { to: "/search", label: "Browse", icon: <Icon.Search /> },
-    { to: "/profile", label: "Profile", icon: <Icon.User /> },
+    { to: "/profile", label: "Account", icon: <Icon.User /> },
     { to: "/sell", label: "Post Ad", icon: <Icon.Plus /> },
     { to: "/manage-ads", label: "Manage Ads", icon: <Icon.List /> },
   ];
@@ -40,7 +42,7 @@ function Sidebar({ onLogout }: { onLogout: () => void }) {
       <div className="mt-6 flex w-full justify-center border-t border-[var(--border)] pt-4">
         <button
           onClick={onLogout}
-          title="Log out"
+          title="Exit"
           className="sidebar-icon flex h-10 w-10 items-center justify-center rounded-lg text-[var(--muted-foreground)] hover:text-red-400"
         >
           <Icon.LogOut />

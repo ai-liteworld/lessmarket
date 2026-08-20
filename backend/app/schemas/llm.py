@@ -34,9 +34,17 @@ class SchemaGenerationResult(BaseModel):
 
 
 class FilterGenerationResult(BaseModel):
-    """Response shape for POST /api/search/filters (spec 4.2)."""
+    """Response shape for POST /api/search/filters (spec 4.2).
 
-    category_path: str
+    Phase 3: `category_path` (singular) became `category_paths` — a search
+    query can plausibly match several categories at once (e.g. "bike" ->
+    both "Vehicles > Bicycles" and "Sports & Fitness > Cycling"), and the
+    frontend renders these as a "relevant categories" chip group the buyer
+    can edit (remove a suggestion, or add their own), mirroring
+    `excluded_categories` below as the "exclude" group.
+    """
+
+    category_paths: list[str] = Field(default_factory=list)
     filters: dict[str, str | float | int | bool]
     refinement_options: list[SpecField]
     # ADDENDUM: categories that look related by keyword/embedding similarity

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "react-router-dom";
-import { fetchAd, saveAd, unsaveAd } from "@/lib/api";
+import { fetchAd, fetchAdPhone, saveAd, unsaveAd } from "@/lib/api";
 import { useAppStore } from "@/store/useAppStore";
 import { Icon } from "@/components/icons";
 
@@ -21,6 +21,12 @@ export default function AdDetailPage() {
     mutationFn: () => (saved ? unsaveAd(id as string) : saveAd(id as string)),
     onSuccess: () => setSaved((s) => !s),
   });
+
+  // Phone is never in the ad payload above - it's only ever fetched here,
+  // once a logged-in buyer clicks "show phone" (spec: masked by default,
+  // registered users only, revealed on click, never exposed to anonymous
+  // visitors even in the network tab).
+  const phoneMutation = useMutation({ mutationFn: () => fetchAdPhone(id as string) });
 
   if (adQuery.isLoading) {
     return (
@@ -90,7 +96,7 @@ export default function AdDetailPage() {
           <div className="lg:col-span-2">
             <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-6">
               <p className="mb-1 text-xs font-medium uppercase tracking-widest text-[var(--muted-foreground)]">
-                {ad.category_path}
+                {ad.category_paths.join(", ")}
               </p>
               <h1 className="font-display text-2xl font-semibold text-[var(--foreground)]">{ad.title}</h1>
               <p className="font-display mt-2 text-3xl font-semibold text-[var(--accent)]">${ad.price}</p>
@@ -107,6 +113,29 @@ export default function AdDetailPage() {
               )}
 
               {ad.location && <p className="mt-4 text-sm text-[var(--muted-foreground)]">📍 {ad.location}</p>}
+
+              <div className="mt-4 flex items-center gap-2">
+                <span className="text-sm text-[var(--muted-foreground)]">Phone:</span>
+                {!token ? (
+                  <p className="text-sm text-[var(--muted-foreground)]">
+                    <Link to="/login" className="font-medium text-[var(--accent)]">Log in</Link> to see the seller's number
+                  </p>
+                ) : phoneMutation.data ? (
+                  <a href={`tel:${phoneMutation.data}`} className="text-sm font-medium text-[var(--accent)]">
+                    {phoneMutation.data}
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => phoneMutation.mutate()}
+                    disabled={phoneMutation.isPending}
+                    className="text-sm font-medium tracking-widest text-[var(--accent)] hover:underline disabled:opacity-50"
+                  >
+                    {phoneMutation.isPending ? "Loading…" : "*** (click to show)"}
+                  </button>
+                )}
+                {phoneMutation.isError && <span className="text-xs text-red-600">No phone on file for this seller</span>}
+              </div>
 
               {ad.description && (
                 <div className="mt-5 border-t border-[var(--border)] pt-5">

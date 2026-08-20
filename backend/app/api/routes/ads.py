@@ -41,7 +41,7 @@ class CreateAdRequest(BaseModel):
     title: str
     description: str
     price: float
-    category_path: str
+    category_paths: list[str]
     specs: dict
     excluded_category_paths: list[str] = []
     user_added_fields: list[str] = []
@@ -52,7 +52,7 @@ class UpdateAdRequest(BaseModel):
     description: str | None = None
     price: float | None = None
     status: str | None = None  # active, sold, expired, deleted
-    category_path: str | None = None
+    category_paths: list[str] | None = None
     specs: dict | None = None
     excluded_category_paths: list[str] | None = None
     user_added_fields: list[str] | None = None
@@ -71,7 +71,8 @@ def _serialize_ad(ad: Ad, images: list[AdImage]) -> dict:
         "description": ad.description,
         "price": float(ad.price),
         "status": ad.status,
-        "category_path": ad.category_path,
+        "category_paths": ad.category_paths,
+        "excluded_category_paths": ad.excluded_category_paths or [],
         "specs": ad.specs,
         "location": ad.location,
         "created_at": ad.created_at.isoformat() if ad.created_at else None,
@@ -87,30 +88,40 @@ def generate_schema(payload: SchemaRequest, _user: User = Depends(get_current_us
 
 @router.get("/categories/suggest")
 def suggest_categories(q: str = "", limit: int = 10, db: Session = Depends(get_db)):
-    """Autocomplete for the 'add your own category' post-ad field, ranked by
-    how often each category_path is already used across real ads."""
+    """Autocomplete for the 'add your own category' post-ad / search fields,
+    ranked by how often each category is already used across real ads.
+    `category_paths` is an array column (phase 3: an ad can carry several
+    categories) - Postgres doesn't allow a set-returning function like
+    unnest() directly in WHERE, so it's unnested in a subquery first and
+    filtered/grouped in the outer query."""
+    inner = select(func.unnest(Ad.category_paths).label("category_path"), Ad.status).subquery()
     stmt = (
-        select(Ad.category_path, func.count().label("cnt"))
-        .where(Ad.status != "deleted")
-        .group_by(Ad.category_path)
+        select(inner.c.category_path, func.count().label("cnt"))
+        .where(inner.c.status != "deleted")
+        .group_by(inner.c.category_path)
         .order_by(func.count().desc())
         .limit(min(limit, 50))
     )
     if q:
-        stmt = stmt.where(Ad.category_path.ilike(f"%{q}%"))
+        stmt = stmt.where(inner.c.category_path.ilike(f"%{q}%"))
     rows = db.execute(stmt).all()
     return {"categories": [row[0] for row in rows]}
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 def create_ad(payload: CreateAdRequest, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not payload.category_paths:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="At least one category is required",
+        )
     ad = Ad(
         id=uuid.uuid4(),
         seller_id=user.id,
         title=payload.title,
         description=payload.description,
         price=payload.price,
-        category_path=payload.category_path,
+        category_paths=payload.category_paths,
         excluded_category_paths=payload.excluded_category_paths,
         specs=payload.specs,
         user_added_fields=payload.user_added_fields,
@@ -251,3 +262,20 @@ def get_ad(ad_id: uuid.UUID, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ad not found")
     images = db.query(AdImage).filter(AdImage.ad_id == ad_id).order_by(AdImage.order_index).all()
     return _serialize_ad(ad, images)
+
+
+@router.get("/{ad_id}/phone")
+def reveal_phone(ad_id: uuid.UUID, _user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """The advertiser's phone number is never included in the public ad
+    payload (GET /{ad_id} above) - it's only ever returned from this
+    endpoint, which requires a valid bearer token, and only once the buyer
+    has explicitly clicked "show phone" in the UI. `_user` is unused beyond
+    the auth check: any registered/logged-in buyer may reveal any seller's
+    number, per spec, not just the ad's own owner."""
+    ad = db.get(Ad, ad_id)
+    if ad is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ad not found")
+    seller = db.get(User, ad.seller_id)
+    if seller is None or not seller.phone:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No phone number on file")
+    return {"phone": seller.phone}

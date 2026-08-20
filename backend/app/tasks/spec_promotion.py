@@ -1,5 +1,7 @@
 """Background learning system (spec section 5): promote frequently-used
 user-added spec fields to suggested fields per category."""
+from sqlalchemy import func, select
+
 from app.core.config import get_settings
 from app.db.session import SessionLocal
 from app.models.ad import Ad
@@ -12,9 +14,11 @@ settings = get_settings()
 def promote_user_specs():
     db = SessionLocal()
     try:
-        categories = db.query(Ad.category_path).distinct().all()
-        for (category_path,) in categories:
-            ads = db.query(Ad).filter(Ad.category_path == category_path).all()
+        # Phase 3: category_paths is an array (an ad can carry several
+        # categories), so distinct categories come from unnesting it first.
+        categories = db.execute(select(func.unnest(Ad.category_paths)).distinct()).scalars().all()
+        for category_path in categories:
+            ads = db.query(Ad).filter(Ad.category_paths.any(category_path)).all()
             if not ads:
                 continue
             counts: dict[str, int] = {}

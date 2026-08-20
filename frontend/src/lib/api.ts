@@ -10,7 +10,15 @@ const baseURL = import.meta.env.VITE_API_BASE_URL
   ? `${import.meta.env.VITE_API_BASE_URL}/api`
   : "/api";
 
-export const api = axios.create({ baseURL });
+export const api = axios.create({
+  baseURL,
+  // Axios's default array serialization is "category_paths[]=a&...[]=b",
+  // but FastAPI's `Query(default=[])` for a `list[str]` param only binds
+  // repeated "category_paths=a&category_paths=b" (no brackets). Without
+  // this, every include/exclude category filter would silently come
+  // through as an empty list on the backend.
+  paramsSerializer: { indexes: null },
+});
 
 api.interceptors.request.use((config) => {
   const token = useAppStore.getState().token;
@@ -51,10 +59,12 @@ export interface SchemaGenerationResult {
 }
 
 export interface FilterGenerationResult {
-  category_path: string;
+  /** AI-suggested "relevant" categories for this search query - editable chip group. */
+  category_paths: string[];
   filters: Record<string, string | number | boolean>;
+  /** Extra per-category fields (numeric/date ones double as sort-chip candidates). */
   refinement_options: SpecField[];
-  /** ADDENDUM: categories to exclude from results even if they match lexically/semantically */
+  /** AI-suggested "exclude" categories for this search query - editable chip group. */
   excluded_categories: string[];
   /** ADDENDUM: key/value pairs results must NOT match */
   negative_filters: Record<string, string | number | boolean>;
@@ -72,7 +82,7 @@ export interface AdSummary {
   id: string;
   title: string;
   price: number;
-  category_path: string;
+  category_paths: string[];
   location?: string | null;
   image_url?: string | null;
   status?: string;
@@ -85,7 +95,14 @@ export interface AdSearchResponse {
   page_size: number;
 }
 
-export function searchAds(params: { q?: string; category_path?: string; page?: number }) {
+/** sort: "recent" (default) | "price_asc" | "price_desc" | "spec:<key>:asc" | "spec:<key>:desc" */
+export function searchAds(params: {
+  q?: string;
+  category_paths?: string[];
+  exclude_category_paths?: string[];
+  sort?: string;
+  page?: number;
+}) {
   return api.get<AdSearchResponse>("/ads/search", { params }).then((r) => r.data);
 }
 
@@ -156,7 +173,8 @@ export interface AdDetail {
   description: string;
   price: number;
   status: string;
-  category_path: string;
+  category_paths: string[];
+  excluded_category_paths: string[];
   specs: Record<string, unknown>;
   location: string | null;
   created_at: string | null;
@@ -167,7 +185,7 @@ export function createAd(payload: {
   title: string;
   description: string;
   price: number;
-  category_path: string;
+  category_paths: string[];
   specs: Record<string, unknown>;
   excluded_category_paths?: string[];
   user_added_fields?: string[];
@@ -182,7 +200,8 @@ export function updateAd(
     description: string;
     price: number;
     status: "active" | "sold" | "expired" | "deleted";
-    category_path: string;
+    category_paths: string[];
+    excluded_category_paths: string[];
     specs: Record<string, unknown>;
   }>
 ) {
@@ -195,6 +214,15 @@ export function deleteAd(adId: string) {
 
 export function fetchAd(adId: string) {
   return api.get<AdDetail>(`/ads/${adId}`).then((r) => r.data);
+}
+
+/**
+ * The advertiser's phone number is never included in fetchAd's response -
+ * this endpoint requires a logged-in buyer and is only called once they
+ * click "show phone" (spec: masked ***, registered users only, click to reveal).
+ */
+export function fetchAdPhone(adId: string) {
+  return api.get<{ phone: string }>(`/ads/${adId}/phone`).then((r) => r.data.phone);
 }
 
 export function saveAd(adId: string) {

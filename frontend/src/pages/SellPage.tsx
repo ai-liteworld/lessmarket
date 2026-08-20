@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { createAd, fetchSellerSchema, type SchemaGenerationResult } from "@/lib/api";
 import { useAppStore } from "@/store/useAppStore";
 import DynamicForm from "@/components/DynamicForm";
-import CategoryAutocomplete from "@/components/CategoryAutocomplete";
+import CategoryGroupPicker from "@/components/CategoryGroupPicker";
 import ImageUploader, { type UploadedImage } from "@/components/ImageUploader";
 import PageShell from "@/components/PageShell";
 import { Icon } from "@/components/icons";
@@ -23,7 +23,8 @@ export default function SellPage() {
   const [step, setStep] = useState<Step>("describe");
   const [description, setDescription] = useState("");
   const [schema, setSchema] = useState<SchemaGenerationResult | null>(null);
-  const [category, setCategory] = useState("");
+  const [categories, setCategories] = useState<string[]>([]);
+  const [excludedCategories, setExcludedCategories] = useState<string[]>([]);
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
   const [adId, setAdId] = useState<string | null>(null);
@@ -34,7 +35,12 @@ export default function SellPage() {
     mutationFn: fetchSellerSchema,
     onSuccess: (result) => {
       setSchema(result);
-      setCategory(result.category_path);
+      // The LLM's top suggestion seeds the "Categories" group; the seller
+      // can add more (from prior ads' categories or a custom one) or remove
+      // it entirely. Its "commonly confused with" list seeds the editable
+      // "Exclude" group the same way.
+      setCategories([result.category_path]);
+      setExcludedCategories(result.excluded_category_paths);
       setStep("details");
     },
   });
@@ -45,9 +51,9 @@ export default function SellPage() {
         title,
         description,
         price: Number(price),
-        category_path: category,
+        category_paths: categories,
         specs,
-        excluded_category_paths: schema?.excluded_category_paths ?? [],
+        excluded_category_paths: excludedCategories,
       }),
     onSuccess: (ad) => {
       setAdId(ad.id);
@@ -130,8 +136,22 @@ export default function SellPage() {
                 </div>
               </div>
 
-              <div className={cardClass}>
-                <CategoryAutocomplete value={category} onChange={setCategory} suggested={schema.category_path} />
+              <div className={`${cardClass} flex flex-col gap-5`}>
+                <CategoryGroupPicker
+                  label="Categories *"
+                  values={categories}
+                  onChange={setCategories}
+                  tone="primary"
+                  addLabel="Add category"
+                />
+                <CategoryGroupPicker
+                  label="Exclude"
+                  values={excludedCategories}
+                  onChange={setExcludedCategories}
+                  tone="danger"
+                  addLabel="Add exclusion"
+                  placeholder="A category this item is NOT (e.g. Sports & Fitness > Exercise Bikes)"
+                />
               </div>
 
               <div className={cardClass}>
@@ -144,7 +164,7 @@ export default function SellPage() {
                     // here before hitting the API.
                     if (!title.trim()) return setFormError("Title is required.");
                     if (!price || Number(price) <= 0) return setFormError("Enter a valid price.");
-                    if (!category.trim()) return setFormError("Category is required.");
+                    if (categories.length === 0) return setFormError("At least one category is required.");
                     setFormError(null);
                     createMutation.mutate(specs);
                   }}
@@ -174,7 +194,7 @@ export default function SellPage() {
                 </div>
                 <div className="px-3 py-2.5">
                   <p className="truncate text-sm font-medium text-[var(--foreground)]">{title || "Your listing title"}</p>
-                  <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">{category || "Category"}</p>
+                  <p className="mt-0.5 truncate text-xs text-[var(--muted-foreground)]">{categories.join(", ") || "Category"}</p>
                 </div>
               </div>
             </div>
