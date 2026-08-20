@@ -1,4 +1,4 @@
--- Phase 2: phone auth + saved ads (favorites).
+-- Phase 2: phone auth + saved ads (favorites)
 -- Run this once against the existing database (e.g. via Supabase SQL Editor).
 
 -- Phone becomes the primary signup/login identifier; email becomes optional.
