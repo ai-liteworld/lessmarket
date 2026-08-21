@@ -8,6 +8,7 @@ import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
 import ManageAdsPage from "./pages/ManageAdsPage";
 import AdDetailPage from "./pages/AdDetailPage";
+import AboutPage from "./pages/AboutPage";
 import { useAppStore } from "./store/useAppStore";
 import { Icon } from "./components/icons";
 
@@ -53,6 +54,8 @@ function Sidebar({ onLogout }: { onLogout: () => void }) {
 }
 
 function GuestHeader() {
+  // Top menu (signed-out): website name, sign in, about us. Signup lives
+  // one click away from the login page itself, so it isn't duplicated here.
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--background)]/90 backdrop-blur-sm">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
@@ -60,17 +63,14 @@ function GuestHeader() {
           Less<span className="text-[var(--accent)]">.</span>Market
         </Link>
         <div className="flex items-center gap-4">
-          <Link to="/search" className="text-sm font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-            Browse
-          </Link>
-          <Link to="/login" className="text-sm font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-            Log in
+          <Link to="/about" className="text-sm font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+            About us
           </Link>
           <Link
-            to="/signup"
+            to="/login"
             className="rounded-[var(--radius-md)] bg-[var(--primary)] px-3 py-1.5 text-sm font-medium text-[var(--primary-foreground)] hover:opacity-90"
           >
-            Sign up
+            Sign in
           </Link>
         </div>
       </div>
@@ -106,6 +106,7 @@ export default function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/manage-ads" element={<ManageAdsPage />} />
           <Route path="/ad/:id" element={<AdDetailPage />} />
+          <Route path="/about" element={<AboutPage />} />
         </Routes>
       </main>
     </div>

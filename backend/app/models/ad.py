@@ -31,6 +31,9 @@ class Ad(Base):
     seller_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     title: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
+    # Phase 3: short LLM-generated line shown under the ad's image in
+    # search/browse grids (see db/migrations/004_*.sql).
+    blurb: Mapped[str | None] = mapped_column(Text, nullable=True)
     price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     status: Mapped[str] = mapped_column(String, nullable=False, default="active")  # active, sold, expired, deleted
 

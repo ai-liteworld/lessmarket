@@ -51,7 +51,7 @@ export default function AdDetailPage() {
     <div className="min-h-screen bg-[var(--background)]">
       <div className="mx-auto max-w-5xl px-6 py-10 sm:px-8">
         <Link
-          to="/search"
+          to="/"
           className="mb-6 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--accent)]"
         >
           <span className="rotate-180"><Icon.Arrow /></span> Back to listings

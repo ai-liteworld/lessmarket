@@ -20,6 +20,9 @@ where type is one of: text, number, select, boolean, date.
 commonly confused with or miscategorized under, and that it explicitly does NOT belong to \
 (e.g., a "mountain bike" should exclude "Sports & Fitness > Exercise Bikes"). Return an \
 empty array if nothing is obviously confusable.
+5. blurb: A short (under 12 words) buyer-facing description of the item, shown under its \
+photo in a search results grid where there's no room for the full listing text (e.g., \
+"Lightweight aluminum frame, good for city commuting"). Plain text, no markdown.
 Return ONLY valid JSON. No explanations."""
 
 BUYER_FILTER_SYSTEM_PROMPT = """You are an AI marketplace assistant. Given a user's search query, return a \

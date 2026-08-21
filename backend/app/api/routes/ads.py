@@ -45,6 +45,7 @@ class CreateAdRequest(BaseModel):
     specs: dict
     excluded_category_paths: list[str] = []
     user_added_fields: list[str] = []
+    blurb: str | None = None
 
 
 class UpdateAdRequest(BaseModel):
@@ -56,6 +57,7 @@ class UpdateAdRequest(BaseModel):
     specs: dict | None = None
     excluded_category_paths: list[str] | None = None
     user_added_fields: list[str] | None = None
+    blurb: str | None = None
 
 
 class AttachImageRequest(BaseModel):
@@ -69,6 +71,7 @@ def _serialize_ad(ad: Ad, images: list[AdImage]) -> dict:
         "seller_id": str(ad.seller_id),
         "title": ad.title,
         "description": ad.description,
+        "blurb": ad.blurb,
         "price": float(ad.price),
         "status": ad.status,
         "category_paths": ad.category_paths,
@@ -125,6 +128,7 @@ def create_ad(payload: CreateAdRequest, user: User = Depends(get_current_user), 
         excluded_category_paths=payload.excluded_category_paths,
         specs=payload.specs,
         user_added_fields=payload.user_added_fields,
+        blurb=payload.blurb,
     )
     db.add(ad)
     db.commit()

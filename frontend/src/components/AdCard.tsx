@@ -7,9 +7,11 @@ interface Props {
   /** Optional trailing action slot (save/unsave button, manage actions, ...) */
   action?: ReactNode;
   /**
-   * Main search/browse grids show only the image + price - everything else
-   * ("other information") is revealed on the ad detail page per spec. Other
-   * contexts (profile's "my ads"/"saved" lists) keep the title/location line.
+   * Main search/browse grids show only the image + price, plus a short
+   * AI-generated blurb line (falls back to the first category if the ad
+   * predates the blurb field) - the title/location combo lives on the ad
+   * detail page instead. Other contexts (profile's "my ads"/"saved" lists)
+   * keep the fuller title/location line.
    */
   compact?: boolean;
 }
@@ -56,7 +58,14 @@ export default function AdCard({ ad, action, compact = false }: Props) {
           {action && <div className="mt-2">{action}</div>}
         </div>
       )}
-      {compact && action && <div className="px-3 py-2">{action}</div>}
+      {compact && (
+        <div className="px-3 py-2">
+          {(ad.blurb || ad.category_paths?.[0]) && (
+            <p className="truncate text-xs text-[var(--muted-foreground)]">{ad.blurb || ad.category_paths?.[0]}</p>
+          )}
+          {action && <div className="mt-2">{action}</div>}
+        </div>
+      )}
     </div>
   );
 }

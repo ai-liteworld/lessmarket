@@ -31,6 +31,11 @@ class SchemaGenerationResult(BaseModel):
     # ADDENDUM: categories this item is commonly confused with / miscategorized
     # under, e.g. "mountain bike" -> excludes "Fitness > Exercise Bikes".
     excluded_category_paths: list[str] = Field(default_factory=list)
+    # Phase 3: a short buyer-facing line ("Lightweight aluminum frame, good
+    # for city commuting") shown under the ad's image in search/browse grids,
+    # where there's no room for the full description. Derived from the same
+    # LLM call as the rest of this schema, so it costs no extra request.
+    blurb: str = ""
 
 
 class FilterGenerationResult(BaseModel):

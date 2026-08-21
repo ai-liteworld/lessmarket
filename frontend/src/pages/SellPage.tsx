@@ -54,6 +54,7 @@ export default function SellPage() {
         category_paths: categories,
         specs,
         excluded_category_paths: excludedCategories,
+        blurb: schema?.blurb,
       }),
     onSuccess: (ad) => {
       setAdId(ad.id);

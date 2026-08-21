@@ -56,6 +56,8 @@ export interface SchemaGenerationResult {
   optional_specs: SpecField[];
   /** ADDENDUM: categories this item is commonly confused with; see docs/ADDENDUM_negative_categories.md */
   excluded_category_paths: string[];
+  /** Short AI-generated line shown under the ad's image in search/browse grids. */
+  blurb: string;
 }
 
 export interface FilterGenerationResult {
@@ -81,6 +83,8 @@ export function fetchSearchFilters(query: string) {
 export interface AdSummary {
   id: string;
   title: string;
+  /** Short AI-generated line shown under the ad's image in search/browse grids. */
+  blurb?: string | null;
   price: number;
   category_paths: string[];
   location?: string | null;
@@ -171,6 +175,7 @@ export interface AdDetail {
   seller_id: string;
   title: string;
   description: string;
+  blurb?: string | null;
   price: number;
   status: string;
   category_paths: string[];
@@ -189,6 +194,7 @@ export function createAd(payload: {
   specs: Record<string, unknown>;
   excluded_category_paths?: string[];
   user_added_fields?: string[];
+  blurb?: string;
 }) {
   return api.post<{ id: string }>("/ads", payload).then((r) => r.data);
 }

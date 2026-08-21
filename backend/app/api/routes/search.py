@@ -110,6 +110,7 @@ def search_ads(
             {
                 "id": str(a.id),
                 "title": a.title,
+                "blurb": a.blurb,
                 "price": float(a.price),
                 "category_paths": a.category_paths,
                 "location": a.location,

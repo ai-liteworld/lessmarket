@@ -34,6 +34,7 @@ def _serialize_ad_summary(ad: Ad, image_url: str | None) -> dict:
     return {
         "id": str(ad.id),
         "title": ad.title,
+        "blurb": ad.blurb,
         "price": float(ad.price),
         "status": ad.status,
         "category_paths": ad.category_paths,

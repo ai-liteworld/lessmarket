@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS ads (
     seller_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     description TEXT NOT NULL,
+    blurb TEXT, -- short LLM-generated line shown under the ad's image in search/browse grids (phase 3b)
     price DECIMAL(10,2) NOT NULL,
     status TEXT NOT NULL DEFAULT 'active', -- active, sold, expired, deleted
     category_paths TEXT[] NOT NULL DEFAULT '{}', -- e.g. ARRAY['Vehicles > Bicycles > Mountain Bikes'] (phase 3: multi-category)
