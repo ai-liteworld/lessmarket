@@ -1,4 +1,4 @@
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { fetchSearchFilters, searchAds, type SpecField } from "@/lib/api";
 import AdCard from "@/components/AdCard";
@@ -75,10 +75,25 @@ export default function LandingPage() {
   const handleTextareaKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key !== " ") return;
     const text = prompt.trim();
-    if (!text || text === lastFetchedText.current || filterMutation.isPending) return;
+    if (!text || text === lastFetchedText.current) return;
     lastFetchedText.current = text;
     filterMutation.mutate(text);
   };
+
+  // Fallback for text that never gets a trailing space - a single word like
+  // "car", or a query the user stops typing without hitting spacebar again.
+  // Fires ~600ms after typing settles, if the spacebar handler above hasn't
+  // already fetched suggestions for this exact text.
+  useEffect(() => {
+    const text = prompt.trim();
+    if (!text || text === lastFetchedText.current) return;
+    const timer = setTimeout(() => {
+      lastFetchedText.current = text;
+      filterMutation.mutate(text);
+    }, 600);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prompt]);
 
   const runSearch = () => setHasSearched(true);
 
@@ -118,6 +133,12 @@ export default function LandingPage() {
 
         {showCategories && (
           <div className="mt-6 flex flex-col items-center gap-4 text-left">
+            {filterMutation.isPending && relevant.length === 0 && exclude.length === 0 && (
+              <p className="text-xs text-[var(--muted-foreground)]">Suggesting categories…</p>
+            )}
+            {filterMutation.isError && relevant.length === 0 && exclude.length === 0 && (
+              <p className="text-xs text-red-600">Couldn't fetch category suggestions - you can still add your own below.</p>
+            )}
             <div className="w-full max-w-xl">
               <CategoryToggleGroup label="Relevant categories" entries={relevant} onChange={setRelevant} tone="primary" addLabel="Add relevant" />
             </div>

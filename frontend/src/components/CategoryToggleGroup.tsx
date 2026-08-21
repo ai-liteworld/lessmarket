@@ -6,18 +6,30 @@ export interface CategoryEntry {
   label: string;
   /** false = suggested-but-removed; stays visible so the user can re-select it without another AI round-trip. */
   active: boolean;
+  /** "ai" (system-suggested) sorts above "custom" (user-typed) - see sortCategoryEntries. Defaults to "ai" when absent. */
+  source?: "ai" | "custom";
 }
 
 /** Merge freshly AI-suggested labels into an existing entry list: new labels
  * are added as active, labels already present keep whatever active state
- * the user last set (so re-suggesting something they removed doesn't
- * silently bring it back). */
+ * (and source) the user last set (so re-suggesting something they removed
+ * doesn't silently bring it back, and a custom label the user already typed
+ * doesn't get reclassified as AI-suggested just because the model later
+ * echoes the same word back). */
 export function mergeCategoryEntries(existing: CategoryEntry[], suggested: string[]): CategoryEntry[] {
   const byLabel = new Map(existing.map((e) => [e.label, e]));
   for (const label of suggested) {
-    if (!byLabel.has(label)) byLabel.set(label, { label, active: true });
+    if (!byLabel.has(label)) byLabel.set(label, { label, active: true, source: "ai" });
   }
   return Array.from(byLabel.values());
+}
+
+/** AI-suggested chips always render before user-added ones, regardless of
+ * when each was introduced across successive suggestion rounds. Stable sort
+ * keeps relative order within each group unchanged. */
+function sortCategoryEntries(entries: CategoryEntry[]): CategoryEntry[] {
+  const rank = (e: CategoryEntry) => (e.source === "custom" ? 1 : 0);
+  return [...entries].sort((a, b) => rank(a) - rank(b));
 }
 
 interface Props {
@@ -50,7 +62,7 @@ export default function CategoryToggleGroup({ label, entries, onChange, tone = "
     if (entries.some((e) => e.label === text)) {
       onChange(entries.map((e) => (e.label === text ? { ...e, active: true } : e)));
     } else {
-      onChange([...entries, { label: text, active: true }]);
+      onChange([...entries, { label: text, active: true, source: "custom" }]);
     }
     setDraft("");
     setAdding(false);
@@ -71,11 +83,13 @@ export default function CategoryToggleGroup({ label, entries, onChange, tone = "
     );
   }
 
+  const sortedEntries = sortCategoryEntries(entries);
+
   return (
     <div className="flex flex-col gap-2 text-sm">
       <span className="font-medium text-[var(--foreground)]">{label}</span>
       <div className="flex flex-wrap items-center gap-2">
-        {entries.map((e) => (
+        {sortedEntries.map((e) => (
           <CategoryChip key={e.label} label={e.label} selected={e.active} onToggle={() => toggle(e.label)} tone={tone} />
         ))}
         {!adding && (
